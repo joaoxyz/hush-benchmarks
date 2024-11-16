@@ -88,10 +88,6 @@ function fannkuch(n)
 end
 
 let arguments = std.args()
-let n = if std.is_empty(arguments) then
-    7
-else
-    arguments[0]
-end
+let n = if std.is_empty(arguments) then 7 else std.int(arguments[0]) end
 
 std.print("Pfannkuchen(" ++ std.to_string(n) ++ ") = " ++ std.to_string(fannkuch(n)))
