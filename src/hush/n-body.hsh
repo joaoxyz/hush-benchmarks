@@ -1,0 +1,62 @@
+#!/usr/bin/env hush
+
+let PI = 3.14159265358979323
+let SOLAR_MASS = 4.0 * PI * PI
+let DAYS_PER_YEAR = 365.24
+
+let Body = function(x, y, z, vx, vy, vz, mass)
+    @[
+        x: x,
+        y: y,
+        z: z,
+        vx: vx,
+        vy: vy,
+        vz: vz,
+        mass: mass,
+    ]
+end
+
+function sqrt(x)
+    let n = 1.0
+    let last_it = nil
+    while n != last_it do
+        last_it = n
+        n = (n + x/n) * 0.5
+    end
+    n
+end
+
+function offset_momentum(bodies)
+    let px = 0.0
+    let py = px
+    let pz = px
+
+    for b in std.iter(bodies) do
+        px = px + (b.vx * b.mass)
+        py = py + (b.vy * b.mass)
+        pz = pz + (b.vz * b.mass)
+    end
+
+    let b = bodies[0]
+    b.vx = - px / SOLAR_MASS
+    b.vy = - py / SOLAR_MASS
+    b.vz = - pz / SOLAR_MASS
+end
+
+function energy(bodies)
+    let e = 0.0
+    let num_bodies = std.len(bodies)
+    for i in std.range(0, num_bodies, 1) do
+        let b = bodies[i]
+        let sq = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz
+        e = e + (0.5 * bodies[i].mass * sq)
+        for j in std.range(i+1, num_bodies, 1) do
+            let dx = b.x - bodies[j].x
+            let dy = b.y - bodies[j].y
+            let dz = b.z - bodies[j].z
+            sq = dx * dx + dy * dy + dz * dz
+            e = e - (b.mass * bodies[j].mass) / sqrt(sq)
+        end
+    end
+    e
+end
