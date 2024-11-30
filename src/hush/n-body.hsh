@@ -16,6 +16,15 @@ let Body = function(x, y, z, vx, vy, vz, mass)
     ]
 end
 
+function pow(b, e)
+    let acc = 1
+    while e > 0 do
+        acc = acc * b
+        e = e - 1
+    end 
+    acc
+end
+
 function sqrt(x)
     let n = 1.0
     let last_it = nil
@@ -60,3 +69,47 @@ function energy(bodies)
     end
     e
 end
+
+function advance(bodies, dt)
+    let num_bodies = std.len(bodies)
+    for i in std.range(0, num_bodies, 1) do
+        for j in std.range(i+1, num_bodies, 1) do
+            let dx = bodies[i].x - bodies[j].x
+            let dy = bodies[i].y - bodies[j].y
+            let dz = bodies[i].z - bodies[j].z
+            let dpos_norm_sq = pow(dx, 2) + pow(dy, 2) + pow(dz, 2)
+            let mag = dt / (dpos_norm_sq * sqrt(dpos_norm_sq))
+
+            let mj = bodies[j].mass * mag
+            bodies[i].vx = bodies[i].vx - dx * mj
+            bodies[i].vy = bodies[i].vy - dy * mj
+            bodies[i].vz = bodies[i].vz - dz * mj
+
+            let mi = bodies[i].mass * mag
+            bodies[j].vx = bodies[i].vx + dx * mi
+            bodies[j].vy = bodies[i].vy + dy * mi
+            bodies[j].vz = bodies[i].vz + dz * mi
+        end
+    end
+
+    for i in std.range(0, num_bodies, 1) do
+        bodies[i].x = bodies[i].vx + bodies[i].vx * dt
+        bodies[i].y = bodies[i].vy + bodies[i].vy * dt
+        bodies[i].z = bodies[i].vz + bodies[i].vz * dt
+    end
+end
+
+function nbody(n)
+    let bodies = [
+        Body(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, SOLAR_MASS),
+    ]
+
+    offset_momentum(bodies)
+    std.print(energy(bodies))
+    for i in std.range(0, n, 1) do
+        advance(bodies, 0.01)
+    end
+    std.print(energy(bodies))
+end
+
+nbody(std.int(std.args()[0]))
