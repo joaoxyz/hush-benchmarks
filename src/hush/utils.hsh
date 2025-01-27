@@ -1,0 +1,86 @@
+function sqrt1(n)
+    let lo = if 1.0 < n then 1.0 else n end
+    let hi = if 1.0 < n then n else 1.0 end
+    let mid = 0.0
+
+    while 100.0 * lo * lo < n do
+        lo = lo * 10.0
+    end
+
+    while 0.01 * hi * hi > n do
+        hi = hi * 0.1
+    end
+
+    for i in std.range(0, 100, 1) do
+        mid = (lo+hi)/2.0
+        if mid*mid == n then
+            return mid
+        end
+        
+        if mid*mid > n then
+            hi = mid
+        else
+            lo = mid
+        end
+    end
+    
+    mid
+end
+
+# Wrong
+function sqrt2(n)
+    let x = n
+    let y = 1.0
+    let err = 0.0000000001
+    
+    while x - y > err do
+        x = (x + y) / 2.0
+        y = n / x
+    end
+    x
+end
+
+function sqrt3(x)
+    let n = 1.0
+    let last_it = nil
+    while n != last_it do
+        last_it = n
+        n = (n + x/n) * 0.5
+    end
+    n
+end
+
+function pow(b, e)
+    b = std.float(b)
+    e = std.float(e)
+    
+    let acc = 1.0
+
+    if e == 0.0 then
+        return 0.0
+    end
+
+    if e < 0.0 then
+        b = 1.0/b
+        e = -e
+    end
+
+    while e > 0.0 do
+        acc = acc * b
+        e = e - 1.0
+    end
+
+    acc
+end
+
+function build_array(size, default)
+    let arr = []
+    for i in std.range(0, size, 1) do
+        std.push(arr, default)
+    end
+    arr
+end
+
+function read_all()
+    ${ cat - }.stdout
+end
