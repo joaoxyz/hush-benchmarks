@@ -11,8 +11,8 @@ else
     exit 1
 fi
 
-mkdir -p benchmarks/{json,md}
+mkdir -p benchmarks/json
 
 for i in {0..4}; do
-    hyperfine -r 50 -w 10 "hush src/hush/${programs[i]}.hsh ${args[i]}" "python src/python/${programs[i]}.py ${args[i]}" --export-json benchmarks/json/${programs[i]}.json --export-markdown benchmarks/md/${programs[i]}.md
+    hyperfine -r 50 -w 10 "hush src/hush/${programs[i]}.hsh ${args[i]}" "python src/python/${programs[i]}.py ${args[i]}" --export-json benchmarks/json/${programs[i]}.json
 done
