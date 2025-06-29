@@ -1,0 +1,74 @@
+function gen_freq(seq, frame)
+    let freqs = @[]
+    let ns = std.len(seq) + 1 - frame
+
+    for i in std.range(0, ns, 1) do
+        let nucleo = std.substr(seq, i, frame)
+
+        if std.contains(freqs, nucleo) then
+            freqs[nucleo] = freqs[nucleo] + 1
+        else
+            freqs[nucleo] = 1
+        end
+    end
+    return @[count: ns, freqs: freqs]
+end
+
+function sort_seq(seq, length)
+    let result = gen_freq(seq, length)
+    let n = result.count
+    let freqs = result.freqs
+
+    let items = []
+    for item in std.iter(freqs) do
+        std.push(items, @[key: item.key, count: item.value])
+    end
+
+    let output = ""
+    for item in std.iter(items) do
+        let percentage = 100.0 * std.float(item.count) / std.float(n)
+        output = output ++ item.key ++ " " ++ std.to_string(percentage) ++ "\n" #
+    end
+    std.print(output)
+    std.print("\n")
+end
+
+function find_seq(seq, s)
+    let result = gen_freq(seq, std.len(s))
+    let freqs = result.freqs
+
+    let count = 0
+    if std.contains(freqs, s) then
+        count = freqs[s]
+    end
+
+    std.print(std.to_string(count) ++ "\t" ++ s ++ "\n")
+end
+
+function main()
+    while true do
+        let line = std.read("")
+        if line == nil or std.substr(line, 0, 3) == ">TH" then
+            break
+        end
+    end
+
+    let sequence = ""
+    while true do
+        let line = std.read("")
+        if line == nil or std.is_empty(line) or std.substr(line, 0, 1) == ">" or std.substr(line, 0, 1) == ";" then
+            break
+        end
+        sequence = sequence ++ std.replace(line, "\n", "")
+    end
+
+    sort_seq(sequence, 1)
+    sort_seq(sequence, 2)
+
+    let to_find = ["ggt", "ggta", "ggtatt", "ggtattttatt", "ggtattttaatttatagt"]
+    for s in std.iter(to_find) do
+        find_seq(sequence, s)
+    end
+end
+
+main()

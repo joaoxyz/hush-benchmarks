@@ -4,57 +4,53 @@
 # submitted by Ian Osgood
 # modified by Sokolov Yura
 # modified by bearophile
-# modified by xfm for parallelization
-# modified by Justin Peel
-# modified by Jean-Baptiste Lamy
+# 2to3
 
 from sys import stdin
-from collections import defaultdict
 
-def gen_freq(frame):
-    global sequence
-    frequences = defaultdict(int)
-    if frame == 1:
-        for nucleo in sequence:
+def gen_freq(seq, frame, frequences):
+    ns = len(seq) + 1 - frame
+    frequences.clear()
+    for ii in range(ns):
+        nucleo = seq[ii:ii + frame]
+        if nucleo in frequences:
             frequences[nucleo] += 1
-    else:
-        for ii in range(len(sequence) - frame + 1) :
-            frequences[sequence[ii : ii + frame]] += 1
-    return frequences
+        else:
+            frequences[nucleo] = 1
+    return ns, frequences
 
-def gen_result(arg):
-    if isinstance(arg, int):
-        frequences = gen_freq(arg)
-        n = sum(frequences.values())
-        l = sorted(frequences.items(), reverse = True, key = lambda seq_freq: seq_freq[::-1])
-        return "".join("%s %.3f\n" % (st, 100.0 * fr / n) for st, fr in l) + "\n"
-    else:
-        frequences = gen_freq(len(arg))
-        return "%s\t%s\n" % (frequences[arg], arg)
 
-def prepare() :
-    for line in stdin:
-        if (line[0] == ">") and (line[1:3] == "TH"):
-            break
+def sort_seq(seq, length, frequences):
+    n, frequences = gen_freq(seq, length, frequences)
 
-    seq = ""
-    for line in stdin:
-        if line[0] == ">":
-            break
-        seq += line
-    return seq.upper().replace('\n','')
+    l = sorted(list(frequences.items()), reverse=True, key=lambda seq_freq: (seq_freq[1],seq_freq[0]))
+
+    print('\n'.join("%s %.3f" % (st, 100.0*fr/n) for st,fr in l))
+    print()
+
+
+def find_seq(seq, s, frequences):
+    n,t = gen_freq(seq, len(s), frequences)
+    print("%d\t%s" % (t.get(s, 0), s))
+
 
 def main():
-    global sequence
-    sequence = prepare()
+    frequences = {}
+    for line in stdin:
+        if line[0:3] == ">TH":
+            break
 
-    from concurrent.futures import ProcessPoolExecutor
+    seq = []
+    for line in stdin:
+        if line[0] in ">;":
+            break
+        seq.append( line[:-1] )
+    sequence = "".join(seq).upper()
 
-    with ProcessPoolExecutor() as executor:
-        r = executor.map(gen_result, ["GGTATTTTAATTTATAGT", "GGTATTTTAATT", "GGTATT", "GGTA", "GGT", 2, 1])
+    for nl in 1,2:
+        sort_seq(sequence, nl, frequences)
 
-    print("".join(reversed(list(r))), end = "")
+    for se in "GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT".split():
+        find_seq(sequence, se, frequences)
 
-
-if __name__=='__main__' :
-    main()
+main()
