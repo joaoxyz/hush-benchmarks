@@ -1,5 +1,3 @@
-#!/usr/bin/env hush
-
 let PI = 3.14159265358979323
 let SOLAR_MASS = 4.0 * PI * PI
 let DAYS_PER_YEAR = 365.24
@@ -16,29 +14,22 @@ let Body = function(x, y, z, vx, vy, vz, mass)
     ]
 end
 
-function pow(b, e)
-    let acc = 1
-    while e > 0 do
-        acc = acc * b
-        e = e - 1
-    end 
-    acc
-end
+function sqrt(n)
+    let x = n
+    let y = 1.0
+    let err = 0.0000001
 
-function sqrt(x)
-    let n = 1.0
-    let last_it = nil
-    while n != last_it do
-        last_it = n
-        n = (n + x/n) * 0.5
+    while x - y > err do
+        x = (x + y) / 2.0
+        y = n / x
     end
-    n
+    x
 end
 
 function offset_momentum(bodies)
     let px = 0.0
-    let py = px
-    let pz = px
+    let py = 0.0
+    let pz = 0.0
 
     for b in std.iter(bodies) do
         px = px + (b.vx * b.mass)
@@ -58,13 +49,13 @@ function energy(bodies)
     for i in std.range(0, num_bodies, 1) do
         let b = bodies[i]
         let sq = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz
-        e = e + (0.5 * bodies[i].mass * sq)
+        e = e + (0.5 * b.mass * sq)
         for j in std.range(i+1, num_bodies, 1) do
             let dx = b.x - bodies[j].x
             let dy = b.y - bodies[j].y
             let dz = b.z - bodies[j].z
-            sq = dx * dx + dy * dy + dz * dz
-            e = e - (b.mass * bodies[j].mass) / sqrt(sq)
+            let d_sq = dx * dx + dy * dy + dz * dz
+            e = e - (b.mass * bodies[j].mass) / sqrt(d_sq)
         end
     end
     e
@@ -72,12 +63,14 @@ end
 
 function advance(bodies, dt)
     let num_bodies = std.len(bodies)
+
     for i in std.range(0, num_bodies, 1) do
-        for j in std.range(i+1, num_bodies, 1) do
+        for j in std.range(i + 1, num_bodies, 1) do
             let dx = bodies[i].x - bodies[j].x
             let dy = bodies[i].y - bodies[j].y
             let dz = bodies[i].z - bodies[j].z
-            let dpos_norm_sq = pow(dx, 2) + pow(dy, 2) + pow(dz, 2)
+
+            let dpos_norm_sq = dx * dx + dy * dy + dz * dz
             let mag = dt / (dpos_norm_sq * sqrt(dpos_norm_sq))
 
             let mj = bodies[j].mass * mag
@@ -86,22 +79,67 @@ function advance(bodies, dt)
             bodies[i].vz = bodies[i].vz - dz * mj
 
             let mi = bodies[i].mass * mag
-            bodies[j].vx = bodies[i].vx + dx * mi
-            bodies[j].vy = bodies[i].vy + dy * mi
-            bodies[j].vz = bodies[i].vz + dz * mi
+            bodies[j].vx = bodies[j].vx + dx * mi
+            bodies[j].vy = bodies[j].vy + dy * mi
+            bodies[j].vz = bodies[j].vz + dz * mi
         end
     end
 
     for i in std.range(0, num_bodies, 1) do
-        bodies[i].x = bodies[i].vx + bodies[i].vx * dt
-        bodies[i].y = bodies[i].vy + bodies[i].vy * dt
-        bodies[i].z = bodies[i].vz + bodies[i].vz * dt
+        bodies[i].x = bodies[i].x + bodies[i].vx * dt
+        bodies[i].y = bodies[i].y + bodies[i].vy * dt
+        bodies[i].z = bodies[i].z + bodies[i].vz * dt
     end
 end
 
 function nbody(n)
     let bodies = [
+        # sun
         Body(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, SOLAR_MASS),
+
+        # jupiter
+        Body(
+            4.84143144246472090,
+            -1.16032004402742839,
+            -1.03622044471123109 * 0.1,
+            1.66007664274403694 * 0.001 * DAYS_PER_YEAR,
+            7.69901118419740425 * 0.001 * DAYS_PER_YEAR,
+            -6.90460016972063023 * 0.00001 * DAYS_PER_YEAR,
+            9.54791938424326609 * 0.0001 * SOLAR_MASS
+        ),
+
+        # saturn
+        Body(
+            8.34336671824457987,
+            4.12479856412430479,
+            -4.03523417114321381 * 0.1,
+            -2.76742510726862411 * 0.001 * DAYS_PER_YEAR,
+            4.99852801234917238 * 0.001 * DAYS_PER_YEAR,
+            2.30417297573763929 * 0.00001 * DAYS_PER_YEAR,
+            2.85885980666130812 * 0.0001 * SOLAR_MASS
+        ),
+
+        # uranus
+        Body(
+            1.28943695621391310 * 10.0,
+            -1.51111514016986312 * 10.0,
+            -2.23307578892655734 * 0.1,
+            2.96460137564761618 * 0.001 * DAYS_PER_YEAR,
+            2.37847173959480950 * 0.001 * DAYS_PER_YEAR,
+            -2.96589568540237556 * 0.00001 * DAYS_PER_YEAR,
+            4.36624404335156298 * 0.00001 * SOLAR_MASS
+        ),
+
+        # neptune
+        Body(
+            1.53796971148509165 * 10.0,
+            -2.59193146099879641 * 10.0,
+            1.79258772950371181 * 0.1,
+            2.68067772490389322 * 0.001 * DAYS_PER_YEAR,
+            1.62824170038242295 * 0.001 * DAYS_PER_YEAR,
+            -9.51592254519715870 * 0.00001 * DAYS_PER_YEAR,
+            5.15138902046611451 * 0.00001 * SOLAR_MASS
+        )
     ]
 
     offset_momentum(bodies)
@@ -109,6 +147,7 @@ function nbody(n)
     for i in std.range(0, n, 1) do
         advance(bodies, 0.01)
     end
+    std.print('\n')
     std.print(energy(bodies))
 end
 
