@@ -22,10 +22,6 @@ function pow(b, e)
 end
 
 function print_byte(val)
-    # { ... } is a command block. It executes shell commands.
-    # The command `printf "\$(printf '%03o' <number>)"` is a standard way
-    # to convert a decimal number to a raw byte character.
-    #{ printf "\$(printf '%03o' $val)" }?
     { perl -e "print chr($val)" }?
 end
 
@@ -49,7 +45,6 @@ std.print("P4\n")
 let fmt_str = std.to_string(size) ++ " " ++ std.to_string(size) ++ "\n"
 std.print(fmt_str)
 
-#let output = ""
 for y in std.range(0, size, 1) do
     for x in std.range(0, size, 1) do
         Ti = 0.0
@@ -77,29 +72,15 @@ for y in std.range(0, size, 1) do
         bit_num = bit_num + 1
 
         if bit_num == 8 then
-            #output = output ++ std.to_string(byte_acc)
-            #std.print(std.to_string(byte_acc))
             print_byte(byte_acc)
             byte_acc = 0
             bit_num = 0
-        # elseif x == size - 1 then
-        #     byte_acc = byte_acc * std.int(pow(2, (8-size%8)))
-        #     print_byte(byte_acc)
-        #     #output = output ++ std.to_string(byte_acc)
-        #     #std.print(std.to_string(byte_acc))
-        #     byte_acc = 0
-        #     bit_num = 0
-        # end
         end
     end
-        if bit_num > 0 then
-        # Calculate padding by left-shifting `8 - bit_num` times.
+    if bit_num > 0 then
         let padding_shifts = 8 - bit_num
         byte_acc = byte_acc * std.int(pow(2, padding_shifts))
-
         print_byte(byte_acc)
-
-        # Reset for the next row.
         byte_acc = 0
         bit_num = 0
     end

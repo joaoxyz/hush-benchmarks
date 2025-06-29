@@ -12,22 +12,22 @@ end
 
 function pow(b, e)
     b = std.float(b)
-    e = std.float(e)
+    e = std.int(e)
 
     let acc = 1.0
 
-    if e == 0.0 then
-        return 0.0
+    if e == 0 then
+        return 1.0
     end
 
-    if e < 0.0 then
+    if e < 0 then
         b = 1.0/b
         e = -e
     end
 
-    while e > 0.0 do
+    while e > 0 do
         acc = acc * b
-        e = e - 1.0
+        e = e - 1
     end
 
     acc
@@ -41,6 +41,29 @@ function build_array(size, default)
     arr
 end
 
-function read_all()
-    ${ cat - }.stdout
+function translate(str, table)
+    let result = ""
+    for char_val in std.iter(str) do
+        let complement = std.to_string(char_val)
+        result = result ++ table[complement]
+    end
+    result
+end
+
+function arr_to_string(arr)
+    let result = ""
+    for i in std.iter(arr) do
+        result = result ++ std.to_string(i)
+    end
+    result
+end
+
+function reverse(arr)
+    let reversed_arr = []
+    let i = std.len(arr) - 1
+    while i >= 0 do
+        std.push(reversed_arr, arr[i])
+        i = i - 1
+    end
+    reversed_arr
 end

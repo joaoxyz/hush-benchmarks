@@ -1,22 +1,10 @@
 function translate(str, table)
     let result = ""
     for char_val in std.iter(str) do
-        # if std.contains(table, char_val) then
-        #     result = result ++ table[char_val]
-        # end
         let complement = std.to_string(char_val)
         result = result ++ table[complement]
     end
     result
-end
-
-function print_keys(dict)
-    std.print(dict["G"])
-    std.print("dfksasf\n")
-    for item in std.iter(dict) do
-        std.print(item.key)
-        std.print("\n")
-    end
 end
 
 function arr_to_string(arr)
@@ -119,4 +107,3 @@ function main()
 end
 
 main()
-#print_keys(translation_table)
