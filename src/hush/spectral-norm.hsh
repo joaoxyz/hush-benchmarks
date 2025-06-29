@@ -9,8 +9,8 @@ end
 function sqrt(n)
     let x = n
     let y = 1.0
-    let err = 0.0000000001
-    
+    let err = 0.0000001
+
     while x - y > err do
         x = (x + y) / 2.0
         y = n / x
@@ -43,26 +43,27 @@ function eval_At_times_u(N, u, Au)
 end
 
 function eval_AtA_times_u(N, u, AtAu)
-    let v = build_array(N, 1.0)
+    let v = build_array(N, 0.0)
     eval_A_times_u(N, u, v)
     eval_At_times_u(N, v, AtAu)
 end
 
-let N = std.int(std.args()[0])
-let u = build_array(N, 1.0)
-let v = build_array(N, 1.0)
+let n = std.int(std.args()[0])
+let u = build_array(n, 1.0)
+let v = build_array(n, 0.0)
 
 for i in std.range(0, 10, 1) do
-    eval_AtA_times_u(N,u,v)
-    eval_AtA_times_u(N,v,u)
+    eval_AtA_times_u(n,u,v)
+    eval_AtA_times_u(n,v,u)
 end
 
 let vBv = 0.0
 let vv = 0.0
 
-for i in std.range(0, N, 1) do
+for i in std.range(0, n, 1) do
     vBv = vBv + u[i]*v[i]
     vv = vv + v[i]*v[i]
 end
 
-std.print(std.substr(std.to_string(sqrt(vBv/vv)), 0, 11))
+std.print(sqrt(vBv / vv))
+#std.print(std.substr(std.to_string(sqrt(vBv/vv)), 0, 11))
