@@ -1,45 +1,55 @@
 # The Computer Language Benchmarks Game
 # https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
 #
-# contributed by Tupteq
-# 2to3 - fixed by Daniele Varrazzo, fixed by Isaac Gouy
+#     line-by-line from Greg Buchholz's C program
+
+
 
 import sys
 
 def main():
-    cout = sys.stdout.buffer.write
-    size = int(sys.argv[1])
-    xr_size = range(size)
-    xr_iter = range(50)
-    bit = 128
+
+    w = h = bit_num = 0
     byte_acc = 0
+    i = 0; iter = 50
+    x = y = limit = 2.0
+    Zr = Zi = Cr = Ci = Tr = Ti = 0.0
 
-    cout(("P4\n%d %d\n" % (size, size)).encode('ascii'))
+    w = h = int(sys.argv[1])
 
-    size = float(size)
-    for y in xr_size:
-        fy = 2j * y / size - 1j
-        for x in xr_size:
-            z = 0j
-            c = 2. * x / size - 1.5 + fy
+    sys.stdout.write(f'P4\n{w} {h}\n'); sys.stdout.flush()
 
-            for i in xr_iter:
-                z = z * z + c
-                if abs(z) >= 2.0:
-                    break
-            else:
-                byte_acc += bit
+    for y in range(h):
 
-            if bit > 1:
-                bit >>= 1
-            else:
-                cout(bytes([byte_acc]))
-                bit = 128
+        for x in range(w):
+
+            Zr = Zi = Tr = Ti = 0.0
+            Cr = (2.0 * x / w - 1.5); Ci = (2.0 * y / h - 1.0)
+
+            for i in range(iter):
+                if Tr+Ti <= limit*limit:
+                    Zi = 2.0*Zr*Zi + Ci
+                    Zr = Tr - Ti + Cr
+                    Tr = Zr * Zr
+                    Ti = Zi * Zi
+
+
+            byte_acc = byte_acc << 1
+            if Tr+Ti <= limit*limit: byte_acc = byte_acc  | 0x01
+
+            bit_num += 1
+
+            if bit_num == 8:
+                sys.stdout.buffer.write(bytes([byte_acc]))
                 byte_acc = 0
+                bit_num = 0
 
-        if bit != 128:
-            cout(bytes([byte_acc]))
-            bit = 128
-            byte_acc = 0
+
+            elif x == w - 1:
+
+                byte_acc = byte_acc << (8-w%8)
+                sys.stdout.buffer.write(bytes([byte_acc]))
+                byte_acc = 0
+                bit_num = 0
 
 main()
