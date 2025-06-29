@@ -1,0 +1,306 @@
+function _strip_leading_zeros(s)
+    let len = std.len(s)
+    if len <= 1 then
+        return s
+    end
+
+    let i = 0
+    while i < len - 1 and std.substr(s, i, 1) == "0" do
+        i = i + 1
+    end
+    return std.substr(s, i, len - i)
+end
+
+function _compare_magnitudes(s1, s2)
+    s1 = _strip_leading_zeros(s1)
+    s2 = _strip_leading_zeros(s2)
+    let len1 = std.len(s1)
+    let len2 = std.len(s2)
+
+    if len1 > len2 then return 1 end
+    if len1 < len2 then return -1 end
+
+    for i in std.range(0, len1, 1) do
+        let d1 = std.int(std.substr(s1, i, 1))
+        let d2 = std.int(std.substr(s2, i, 1))
+        if d1 > d2 then return 1 end
+        if d1 < d2 then return -1 end
+    end
+
+    return 0
+
+function _add_magnitudes(s1, s2)
+    let result = ""
+    let carry = 0
+    let i = std.len(s1) - 1
+    let j = std.len(s2) - 1
+
+    while i >= 0 or j >= 0 or carry > 0 do
+        let d1 = if i >= 0 then std.int(std.substr(s1, i, 1)) else 0 end
+        let d2 = if j >= 0 then std.int(std.substr(s2, j, 1)) else 0 end
+
+        let sum = d1 + d2 + carry
+        result = std.to_string(sum % 10) ++ result
+        carry = std.int(sum / 10)
+
+        i = i - 1
+        j = j - 1
+    end
+    return _strip_leading_zeros(result)
+end
+
+function _subtract_magnitudes(s1, s2)
+    let result = ""
+    let borrow = 0
+    let i = std.len(s1) - 1
+    let j = std.len(s2) - 1
+
+    while i >= 0 do
+        let d1 = std.int(std.substr(s1, i, 1)) - borrow
+        let d2 = if j >= 0 then std.int(std.substr(s2, j, 1)) else 0 end
+
+        if d1 < d2 then
+            d1 = d1 + 10
+            borrow = 1
+        else
+            borrow = 0
+        end
+
+        result = std.to_string(d1 - d2) ++ result
+        i = i - 1
+        j = j - 1
+    end
+    return _strip_leading_zeros(result)
+end
+
+function _divide_magnitudes(dividend_s, divisor_s)
+    if _compare_magnitudes(dividend_s, divisor_s) == -1 then
+        return @[quotient: "0", remainder: dividend_s]
+    end
+
+    let quotient = ""
+    let current_dividend = ""
+    let dividend_len = std.len(dividend_s)
+
+    for i in std.range(0, dividend_len, 1) do
+        current_dividend = current_dividend ++ std.substr(dividend_s, i, 1)
+        current_dividend = _strip_leading_zeros(current_dividend)
+
+        let q = 0
+        while _compare_magnitudes(current_dividend, divisor_s) >= 0 do
+            current_dividend = _subtract_magnitudes(current_dividend, divisor_s)
+            q = q + 1
+        end
+        quotient = quotient ++ std.to_string(q)
+    end
+
+    return @[
+        quotient: _strip_leading_zeros(quotient),
+        remainder: _strip_leading_zeros(current_dividend)
+    ]
+end
+
+function BigNum(num_str)
+    std.typecheck(num_str, "string")
+
+    let is_negative = false
+    let digits = num_str
+
+    if std.substr(num_str, 0, 1) == "-" then
+        is_negative = true
+        digits = std.substr(num_str, 1, std.len(num_str) - 1)
+    end
+
+    let obj = @[
+        _digits: _strip_leading_zeros(digits),
+        _is_negative: is_negative,
+
+        to_string: function()
+            if self._is_negative and self._digits != "0" then
+                return "-" ++ self._digits
+            end
+            return self._digits
+        end,
+
+        add: function(other)
+            if self._is_negative == other._is_negative then
+                let new_digits = _add_magnitudes(self._digits, other._digits)
+                let result = BigNum(new_digits)
+                result._is_negative = self._is_negative
+                return result
+            end
+
+            let cmp = _compare_magnitudes(self._digits, other._digits)
+            if cmp == 0 then
+                return BigNum("0")
+            end
+
+            if cmp > 0 then
+                let new_digits = _subtract_magnitudes(self._digits, other._digits)
+                let result = BigNum(new_digits)
+                result._is_negative = self._is_negative
+                return result
+            else
+                let new_digits = _subtract_magnitudes(other._digits, self._digits)
+                let result = BigNum(new_digits)
+                result._is_negative = other._is_negative
+                return result
+            end
+        end,
+
+        subtract: function(other)
+            let negated_other = BigNum(other.to_string())
+            negated_other._is_negative = not negated_other._is_negative
+            return self.add(negated_other)
+        end,
+
+        multiply: function(other)
+            let final_is_negative = self._is_negative != other._is_negative
+            let s1 = self._digits
+            let s2 = other._digits
+
+            if s1 == "0" or s2 == "0" then
+                return BigNum("0")
+            end
+
+            let result = BigNum("0")
+            let len2 = std.len(s2)
+
+            for i in std.range(0, len2, 1) do
+                let digit2 = std.int(std.substr(s2, len2 - 1 - i, 1))
+                let carry = 0
+                let partial_product_str = ""
+
+                for j in std.range(0, std.len(s1), 1) do
+                    let digit1 = std.int(std.substr(s1, std.len(s1) - 1 - j, 1))
+                    let product = digit1 * digit2 + carry
+                    partial_product_str = std.to_string(product % 10) ++ partial_product_str
+                    carry = std.int(product / 10)
+                end
+
+                if carry > 0 then
+                    partial_product_str = std.to_string(carry) ++ partial_product_str
+                end
+
+                for k in std.range(0, i, 1) do
+                    partial_product_str = partial_product_str ++ "0"
+                end
+
+                result = result.add(BigNum(partial_product_str))
+            end
+
+            result._is_negative = final_is_negative
+            return result
+        end,
+
+        divide: function(other)
+            if other._digits == "0" then
+                std.panic("Division by zero")
+            end
+
+            let quotient_is_negative = self._is_negative != other._is_negative
+
+            let remainder_is_negative = self._is_negative
+
+            let div_result = _divide_magnitudes(self._digits, other._digits)
+
+            let quotient = BigNum(div_result.quotient)
+            quotient._is_negative = quotient_is_negative
+
+            let remainder = BigNum(div_result.remainder)
+            remainder._is_negative = remainder_is_negative
+
+            return @[quotient: quotient, remainder: remainder]
+        end,
+
+        is_equal_to: function(other)
+            return self.to_string() == other.to_string()
+        end,
+
+        is_greater_than: function(other)
+            if self._is_negative != other._is_negative then
+                return not self._is_negative
+            end
+
+            if self._is_negative then
+                return _compare_magnitudes(self._digits, other._digits) == -1
+            end
+
+            return _compare_magnitudes(self._digits, other._digits) == 1
+        end,
+
+        is_less_than: function(other)
+            return not self.is_greater_than(other) and not self.is_equal_to(other)
+        end,
+    ]
+
+    return obj
+end
+
+# Global vars
+let n = std.int(std.args()[0])
+
+let tmp1 = BigNum("0")
+let tmp2 = BigNum("0")
+
+let acc = BigNum("0")
+let den = BigNum("1")
+let num = BigNum("1")
+
+let k = BigNum("0")
+let i = 0
+
+function extract_Digit(nth) #bignum input
+    tmp1 = num.multiply(nth)
+    tmp2 = tmp1.add(acc)
+    tmp1 = tmp2.divide(den).quotient
+
+    tmp1
+end
+
+function eliminate_Digit(d) #bignum input
+    acc = acc.subtract(den.multiply(d))
+    acc = acc.multiply(BigNum("10"))
+    num = num.multiply(BigNum("10"))
+end
+
+function next_Term(k1) #bignum input
+    let k2 = k1.multiply(BigNum("2")).add(BigNum("1"))
+    acc = acc.add(num.multiply(BigNum("2")))
+    acc = acc.multiply(k2)
+    den = den.multiply(k2)
+    num = num.multiply(k1)
+end
+
+function main()
+    let skip1 = false
+    let skip2 = false
+    while i < n do
+        skip1 = false
+        skip2 = false
+        k = k.add(BigNum("1"))
+        next_Term(k)
+
+        if num.is_greater_than(acc) then
+            skip1 = true
+        end
+
+        if not skip1 then
+            let d = extract_Digit(BigNum("3"))
+            if not d.is_equal_to(extract_Digit(BigNum("4"))) then
+                skip2 = true
+            end
+
+            std.print(d.to_string())
+            if not skip2 then
+                i = i + 1
+                if i % 10 == 0 then
+                    std.print("\t:"++ std.to_string(i) ++ "\n")
+                end
+                eliminate_Digit(d)
+            end
+        end
+    end
+end
+
+main()
