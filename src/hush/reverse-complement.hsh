@@ -1,0 +1,122 @@
+function translate(str, table)
+    let result = ""
+    for char_val in std.iter(str) do
+        # if std.contains(table, char_val) then
+        #     result = result ++ table[char_val]
+        # end
+        let complement = std.to_string(char_val)
+        result = result ++ table[complement]
+    end
+    result
+end
+
+function print_keys(dict)
+    std.print(dict["G"])
+    std.print("dfksasf\n")
+    for item in std.iter(dict) do
+        std.print(item.key)
+        std.print("\n")
+    end
+end
+
+function arr_to_string(arr)
+    let result = ""
+    for i in std.iter(arr) do
+        result = result ++ std.to_string(i)
+    end
+    result
+end
+
+function reverse(arr)
+    let reversed_arr = []
+    let i = std.len(arr) - 1
+    while i >= 0 do
+        std.push(reversed_arr, arr[i])
+        i = i - 1
+    end
+    reversed_arr
+end
+
+function tail(arr)
+    let result = []
+    let arr_len = std.len(arr)
+
+    if arr_len <= 1 then
+        return result
+    end
+
+    for i in std.range(1, arr_len, 1) do
+        std.push(result, arr[i])
+    end
+
+    result
+end
+
+let translation_table = @[
+    A: "T",
+    C: "G",
+    B: "V",
+    D: "H",
+    G: "C",
+    H: "D",
+    K: "M",
+    M: "K",
+    N: "N",
+    S: "S",
+    R: "Y",
+    U: "A",
+    T: "A",
+    W: "W",
+    V: "B",
+    Y: "R",
+    a: "T",
+    c: "G",
+    b: "V",
+    d: "H",
+    g: "C",
+    h: "D",
+    k: "M",
+    m: "K",
+    n: "N",
+    s: "S",
+    r: "Y",
+    u: "A",
+    t: "A",
+    w: "W",
+    v: "B",
+    y: "R",
+]
+
+function show(seq)
+    let temp = std.split(seq, "\n")
+    let header = temp[0]
+    let s = arr_to_string(reverse(translate(arr_to_string(tail(temp)), translation_table)))
+
+    std.print(">" ++ header ++ "\n")
+    for i in std.range(0, std.len(s), 60) do
+        let output = std.substr(s, i, 60)
+        if output == nil then
+            output = std.substr(s, i, std.len(s)-i)
+        end
+        std.print(output ++ "\n")
+    end
+end
+
+function main()
+    let input = ""
+    while true do
+        let line = std.read("")
+        if std.is_empty(line) then
+            break
+        end
+        input = input ++ line
+    end
+    let seqs = tail(std.split(input, ">"))
+
+    for seq in std.iter(seqs) do
+        show(seq)
+    end
+end
+
+main()
+#print_keys(translation_table)

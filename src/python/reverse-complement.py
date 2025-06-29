@@ -1,41 +1,33 @@
 # The Computer Language Benchmarks Game
 # https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
 #
-# contributed by Matt Vollrath
+# contributed by Jacob Lee, Steven Bethard, et al
+# 2to3, fixed by Daniele Varrazzo
+# modified by Daniel Nanz
 
-from itertools import starmap
-from sys import stdin, stdout
-
-COMPLEMENTS = bytes.maketrans(
-    b"ACGTUMRWSYKVHDBNacgtumrwsykvhdbn",
-    b"TGCAAKYWSRMBDHVNTGCAAKYWSRMBDHVN",
-)
-COMMENT = ord(">")
-
-def reverse_sequence(heading, sequence):
-    chunk = bytearray(heading)
-    translated = sequence.translate(COMPLEMENTS, b"\n")
-    translated.reverse()
-    for i in range(0, len(translated), 60):
-        chunk += translated[i : i + 60] + b"\n"
-    return chunk
+import sys
 
 
-def generate_sequences(lines):
-    heading = None
-    sequence = bytearray()
-    for line in lines:
-        if line[0] == COMMENT:
-            if heading:
-                yield heading, sequence
-                sequence = bytearray()
-            heading = line
-        else:
-            sequence += line
-    yield heading, sequence
+def show(seq, table=bytes.maketrans(b'ACBDGHKMNSRUTWVYacbdghkmnsrutwvy',
+                                    b'TGVHCDMKNSYAAWBRTGVHCDMKNSYAAWBR'),
+         write=sys.stdout.buffer.write, nl=b'\n'):
+
+    [header, s] = seq.split(nl, 1)
+    s = s.translate(table, nl)[: : -1]
+
+    write(b'>' + header + nl)
+    for i in range(0, len(s), 60):
+        write(s[i : i + 60] + nl)
 
 
-if __name__ == "__main__":
-    sequences = generate_sequences(stdin.buffer)
-    for chunk in starmap(reverse_sequence, sequences):
-        stdout.buffer.write(chunk)
+
+def main():
+
+    sys.stdin = sys.stdin.detach()
+    seqs = b''.join([line for line in sys.stdin]).split(b'>')[1 : ]
+
+    for seq in seqs:
+        show(seq)
+
+
+main()
